@@ -1,0 +1,2 @@
+# Pour l'instant, aucun package externe nécessaire
+# On ajoutera plus tard si besoin

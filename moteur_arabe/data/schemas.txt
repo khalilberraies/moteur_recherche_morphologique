@@ -1,0 +1,12 @@
+# Schèmes morphologiques arabes
+# Format: nom:modele:description
+
+فاعل:1a23:nom d'agent (faʿil) - acteur
+مفعول:ma123:participe passif (mafʿūl) - subissant l'action
+مفعل:ma12a3:nom de lieu ou instrument (mifʿal) - lieu/outil
+افعل:af1a2:impératif (ifʿal) - ordre
+افتعل:ifta12a3:forme réfléchie (iftaʿala) - action sur soi
+تفاعل:tafa12a3:forme réciproque (tafaʿala) - action mutuelle
+انفعل:infa12a3:forme inchoative (infaʿala) - devenir
+استفعل:istaf1a2a:forme demandante (istafʿala) - demander à
+تفعل:ta12a3:forme causative (tafʿʿala) - faire faire
