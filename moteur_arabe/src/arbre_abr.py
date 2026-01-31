@@ -1,150 +1,210 @@
-class NoeudABR:
-    """Nœud pour l'arbre binaire de recherche stockant une racine arabe"""
+# -*- coding: utf-8 -*-
+class NoeudAVL:
+    """Nœud de l'arbre AVL pour une racine arabe"""
+    
     def __init__(self, racine):
-        self.racine = racine  # Chaîne de 3 caractères arabes
-        self.gauche = None
-        self.droit = None
-        self.derives = []  # Liste des mots dérivés validés
-        self.freq = 0      # Fréquence d'apparition (optionnel)
+        self.racine = racine          # Racine arabe (ex: "كتب")
+        self.derivees = []            # Liste des mots dérivés
+        self.gauche = None            # Sous-arbre gauche
+        self.droite = None            # Sous-arbre droit
+        self.hauteur = 1              # Hauteur pour AVL
 
-
-class ArbreABR:
-    """Arbre Binaire de Recherche pour l'indexation des racines arabes"""
+class ArbreAVL:
+    """Arbre AVL pour gérer les racines arabes avec index inverse"""
     
     def __init__(self):
         self.racine = None
+        self.index_inverse = {}       # mot → racine (TRÈS IMPORTANT !)
     
-    def inserer(self, racine_str):
-        """Insère une nouvelle racine dans l'arbre (itératif)"""
-        nouveau_noeud = NoeudABR(racine_str)
+    def hauteur(self, noeud):
+        """Retourne la hauteur d'un nœud"""
+        return noeud.hauteur if noeud else 0
+    
+    def equilibre(self, noeud):
+        """Calcule le facteur d'équilibre"""
+        return self.hauteur(noeud.gauche) - self.hauteur(noeud.droite) if noeud else 0
+    
+    def rotation_droite(self, z):
+        """Rotation droite AVL"""
+        y = z.gauche
+        T2 = y.droite
+        y.droite = z
+        z.gauche = T2
+        z.hauteur = 1 + max(self.hauteur(z.gauche), self.hauteur(z.droite))
+        y.hauteur = 1 + max(self.hauteur(y.gauche), self.hauteur(y.droite))
+        return y
+    
+    def rotation_gauche(self, z):
+        """Rotation gauche AVL"""
+        y = z.droite
+        T2 = y.gauche
+        y.gauche = z
+        z.droite = T2
+        z.hauteur = 1 + max(self.hauteur(z.gauche), self.hauteur(z.droite))
+        y.hauteur = 1 + max(self.hauteur(y.gauche), self.hauteur(y.droite))
+        return y
+    
+    def inserer(self, noeud, racine):
+        """Insère une nouvelle racine"""
+        if not noeud:
+            return NoeudAVL(racine)
         
-        if self.racine is None:
-            self.racine = nouveau_noeud
-            return
-        
-        courant = self.racine
-        parent = None
-        
-        while courant is not None:
-            parent = courant
-            # Comparaison lexicographique arabe
-            if racine_str < courant.racine:
-                courant = courant.gauche
-            elif racine_str > courant.racine:
-                courant = courant.droit
-            else:
-                # Racine déjà présente
-                return
-        
-        # Insère à la bonne position
-        if racine_str < parent.racine:
-            parent.gauche = nouveau_noeud
+        if racine < noeud.racine:
+            noeud.gauche = self.inserer(noeud.gauche, racine)
+        elif racine > noeud.racine:
+            noeud.droite = self.inserer(noeud.droite, racine)
         else:
-            parent.droit = nouveau_noeud
-    
-    def rechercher(self, racine_str):
-        """Recherche une racine dans l'arbre (itératif)"""
-        courant = self.racine
+            return noeud  # Racine déjà présente
         
-        while courant is not None:
-            if racine_str == courant.racine:
-                return courant
-            elif racine_str < courant.racine:
-                courant = courant.gauche
-            else:
-                courant = courant.droit
+        noeud.hauteur = 1 + max(self.hauteur(noeud.gauche), 
+                               self.hauteur(noeud.droite))
         
-        return None  # Non trouvé
-    
-    # CORRECTION DES MÉTHODES RÉCURSIVES
-    
-    def _afficher_infixe(self, noeud):
-        """Méthode interne récursive"""
-        if noeud:
-            self._afficher_infixe(noeud.gauche)
-            print(f"Racine: {noeud.racine}, Dérivés: {len(noeud.derives)}")
-            self._afficher_infixe(noeud.droit)
-    
-    def afficher_infixe(self):
-        """Parcours infixe pour afficher les racines triées"""
-        print("Racines dans l'arbre (triées) :")
-        self._afficher_infixe(self.racine)
-    
-    def _afficher_arbre(self, noeud, prefix="", est_gauche=True):
-        """Méthode interne pour affichage hiérarchique"""
-        if noeud is None:
-            return
+        balance = self.equilibre(noeud)
         
-        if noeud.droit:
-            self._afficher_arbre(noeud.droit, prefix + ("│   " if est_gauche else "    "), False)
+        # Cas Gauche-Gauche
+        if balance > 1 and racine < noeud.gauche.racine:
+            return self.rotation_droite(noeud)
         
-        print(prefix + ("└── " if est_gauche else "┌── ") + noeud.racine)
+        # Cas Droite-Droite
+        if balance < -1 and racine > noeud.droite.racine:
+            return self.rotation_gauche(noeud)
         
-        if noeud.gauche:
-            self._afficher_arbre(noeud.gauche, prefix + ("    " if est_gauche else "│   "), True)
+        # Cas Gauche-Droite
+        if balance > 1 and racine > noeud.gauche.racine:
+            noeud.gauche = self.rotation_gauche(noeud.gauche)
+            return self.rotation_droite(noeud)
+        
+        # Cas Droite-Gauche
+        if balance < -1 and racine < noeud.droite.racine:
+            noeud.droite = self.rotation_droite(noeud.droite)
+            return self.rotation_gauche(noeud)
+        
+        return noeud
     
-    def afficher_arbre(self):
-        """Affiche l'arbre de manière hiérarchique (pour debug)"""
-        if self.racine is None:
-            print("Arbre vide")
-            return
-        self._afficher_arbre(self.racine)
+    def rechercher(self, noeud, racine):
+        """Recherche une racine dans l'arbre"""
+        if not noeud or racine == noeud.racine:
+            return noeud
+        
+        if racine < noeud.racine:
+            return self.rechercher(noeud.gauche, racine)
+        
+        return self.rechercher(noeud.droite, racine)
     
-    def ajouter_derive(self, racine_str, mot_derive):
-        """Ajoute un mot dérivé à une racine"""
-        noeud = self.rechercher(racine_str)
-        if noeud:
-            if mot_derive not in noeud.derives:
-                noeud.derives.append(mot_derive)
-                noeud.freq += 1
+    def ajouter_derive(self, racine, mot, scheme=None):
+        """Ajoute un dérivé à une racine"""
+        noeud = self.rechercher(self.racine, racine)
+        if not noeud:
+            return False
+        
+        # Ajoute à la liste des dérivés
+        if mot not in noeud.derivees:
+            noeud.derivees.append(mot)
+            
+            # MET À JOUR L'INDEX INVERSE (IMPORTANT !)
+            self.index_inverse[mot] = racine
+            
             return True
         return False
     
-    def get_derives(self, racine_str):
-        """Récupère la liste des dérivés d'une racine"""
-        noeud = self.rechercher(racine_str)
-        if noeud:
-            return noeud.derives.copy()  # Retourne une copie
-        return []
+    def trouver_racine_du_mot(self, mot):
+        """
+        Trouve la racine d'un mot
+        Complexité O(1) grâce à index_inverse !
+        """
+        return self.index_inverse.get(mot)
     
-    def _hauteur(self, noeud):
-        """Méthode interne récursive"""
-        if noeud is None:
+    def afficher_infixe(self, noeud):
+        """Affiche toutes les racines triées"""
+        if noeud:
+            self.afficher_infixe(noeud.gauche)
+            print(f"  - {noeud.racine} ({len(noeud.derivees)} dérivés)")
+            self.afficher_infixe(noeud.droite)
+    
+    def charger_depuis_fichier(self, nom_fichier):
+        """Charge les racines depuis un fichier texte"""
+        try:
+            with open(nom_fichier, 'r', encoding='utf-8') as f:
+                for ligne in f:
+                    racine = ligne.strip()
+                    if racine and len(racine) >= 3:
+                        self.racine = self.inserer(self.racine, racine)
+            print(f"✅ Racines chargées depuis '{nom_fichier}'")
+        except FileNotFoundError:
+            print(f"❌ Fichier '{nom_fichier}' non trouvé")
+    
+    def compter_noeuds(self, noeud):
+        """Compte le nombre de racines"""
+        if not noeud:
             return 0
-        return 1 + max(self._hauteur(noeud.gauche), self._hauteur(noeud.droit))
+        return 1 + self.compter_noeuds(noeud.gauche) + self.compter_noeuds(noeud.droite)
+    def trouver_min(self, noeud):
+        """Trouve le nœud avec la valeur minimale"""
+        current = noeud
+        while current.gauche:
+            current = current.gauche
+        return current
     
-    def hauteur(self):
-        """Calcule la hauteur de l'arbre"""
-        return self._hauteur(self.racine)
-    
-    def _taille(self, noeud):
-        """Méthode interne récursive"""
-        if noeud is None:
-            return 0
-        return 1 + self._taille(noeud.gauche) + self._taille(noeud.droit)
-    
-    def taille(self):
-        """Compte le nombre de nœuds dans l'arbre"""
-        return self._taille(self.racine)
-    
-    def _parcours_prefixe(self, noeud):
-        """Méthode interne"""
-        if noeud:
-            print(noeud.racine, end=" ")
-            self._parcours_prefixe(noeud.gauche)
-            self._parcours_prefixe(noeud.droit)
-    
-    def parcours_prefixe(self):
-        """Parcours préfixe (racine, gauche, droit)"""
-        self._parcours_prefixe(self.racine)
-    
-    def _parcours_postfixe(self, noeud):
-        """Méthode interne"""
-        if noeud:
-            self._parcours_postfixe(noeud.gauche)
-            self._parcours_postfixe(noeud.droit)
-            print(noeud.racine, end=" ")
-    
-    def parcours_postfixe(self):
-        """Parcours postfixe (gauche, droit, racine)"""
-        self._parcours_postfixe(self.racine)
+    def supprimer(self, noeud, racine):
+        """Supprime une racine de l'arbre AVL"""
+        if not noeud:
+            return noeud
+        
+        # Étape 1 : suppression standard BST
+        if racine < noeud.racine:
+            noeud.gauche = self.supprimer(noeud.gauche, racine)
+        elif racine > noeud.racine:
+            noeud.droite = self.supprimer(noeud.droite, racine)
+        else:
+            # Nœud à supprimer trouvé
+            
+            # Supprimer de l'index inverse tous les dérivés
+            for mot in noeud.derivees:
+                if mot in self.index_inverse:
+                    del self.index_inverse[mot]
+            
+            # Nœud avec un seul enfant ou sans enfant
+            if not noeud.gauche:
+                temp = noeud.droite
+                noeud = None
+                return temp
+            elif not noeud.droite:
+                temp = noeud.gauche
+                noeud = None
+                return temp
+            
+            # Nœud avec deux enfants
+            temp = self.trouver_min(noeud.droite)
+            noeud.racine = temp.racine
+            noeud.derivees = temp.derivees
+            noeud.droite = self.supprimer(noeud.droite, temp.racine)
+        
+        if not noeud:
+            return noeud
+        
+        # Étape 2 : mettre à jour la hauteur
+        noeud.hauteur = 1 + max(self.hauteur(noeud.gauche),
+                               self.hauteur(noeud.droite))
+        
+        # Étape 3 : rééquilibrer l'arbre
+        balance = self.equilibre(noeud)
+        
+        # Cas Gauche-Gauche
+        if balance > 1 and self.equilibre(noeud.gauche) >= 0:
+            return self.rotation_droite(noeud)
+        
+        # Cas Gauche-Droite
+        if balance > 1 and self.equilibre(noeud.gauche) < 0:
+            noeud.gauche = self.rotation_gauche(noeud.gauche)
+            return self.rotation_droite(noeud)
+        
+        # Cas Droite-Droite
+        if balance < -1 and self.equilibre(noeud.droite) <= 0:
+            return self.rotation_gauche(noeud)
+        
+        # Cas Droite-Gauche
+        if balance < -1 and self.equilibre(noeud.droite) > 0:
+            noeud.droite = self.rotation_droite(noeud.droite)
+            return self.rotation_gauche(noeud)
+        
+        return noeud

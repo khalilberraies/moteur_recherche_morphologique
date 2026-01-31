@@ -1,5 +1,3 @@
-# Racines arabes trilitères
-# Format: une racine par ligne
 
 كتب
 فعل
